@@ -7,15 +7,17 @@
 #include <dirent.h>
 #include <errno.h>
 #include <sys/time.h>
+#include <sys/stat.h>
 
-char *extention[]={".pdf", ".doc", ".txt"};
-
+char *extention[3]={".pdf", ".doc", ".txt"};
+static const char *default_dir = "/home/falnerz/Documents";
 
 static int xmp_getattr(const char *path, struct stat *stbuf)
 {
 	int res;
-
-	res = lstat(path, stbuf);
+    char new_path[256];
+    sprintf(new_path,"%s%s",default_dir,path);
+	res = lstat(new_path, stbuf);
 	if (res == -1)
 		return -errno;
 
@@ -27,11 +29,18 @@ static int xmp_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 {
     DIR *dp;
 	struct dirent *de;
+    char new_path[256];
+    if( !strcmp(path,"/") ){
+        path=default_dir;
+//        sprintf(new_path,"%s",);
+        strcpy(new_path,default_dir);
+    }
+    else sprintf(new_path,"%s%s",default_dir,path);
 
 	(void) offset;
 	(void) fi;
 
-	dp = opendir(path);
+	dp = opendir(new_path);
 	if (dp == NULL)
 		return -errno;
 
@@ -47,30 +56,60 @@ static int xmp_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 	closedir(dp);
 	return 0;
 }
+/*
+
+
+*/
 
 static int xmp_read(const char *path, char *buf, size_t size, off_t offset,
 		    struct fuse_file_info *fi)
 {
-	int fd;
+ 	int fd;
 	int res;
+	char new_path[256];
 	(void) fi;
 
-    for(int i=0;i<3;++i){
-        if(strstr(path,extention[i])!=NULL){
-            system("zenity --error --text=\"Terjadi kesalahan\! File berisi konten berbahaya.\" --title=\"Warning\!\"");
-            return;
-        }
-    }
+    sprintf(new_path,"%s%s",default_dir,path);
 
-    fd = open(path, O_RDONLY);
-	if (fd == -1)
+    fd = open(new_path, O_RDONLY);
+	if (fd == -1){
 		return -errno;
+	}
+	else{
+        char ext[256];
 
-	res = pread(fd, buf, size, offset);
-	if (res == -1)
-		res = -errno;
+        int u;
+        for(u = 0; u < strlen(new_path) && new_path[u] != '.'; u++);        strcpy(ext, new_path+u);
+        for(int ext_idx=0;ext_idx<3;++ext_idx){
+            if(!strcmp(ext,extention[ext_idx])){
+                 system("zenity --error --title 'Error' --text 'Terjadi Kesalahan! File berisi konten berbahaya.'");
+                    char rahasia[256];
+                    strcpy(rahasia,new_path);
+                    for(int i=strlen(rahasia)-1;rahasia[i]!='/';i--)rahasia[i]='\0';
+                    strcat(rahasia,"rahasia");
 
-	close(fd);
+                    struct stat s;
+                    if (stat(rahasia, &s) != 0)mkdir(rahasia, 0777);
+
+                    strcat(rahasia,"/");
+                    for(int i=strlen(new_path)-1; ;i--){
+                        if(new_path[i]=='/'){
+                            strcat(rahasia,new_path+(i+1));
+                            break;
+                        }
+                    }
+                    strcat(rahasia,".ditandai");
+                    char command[256];
+                    sprintf(command,"mv %s %s",new_path,rahasia);
+                    system(command);
+                    return -errno;
+
+            }
+        }
+        res = pread(fd, buf, size, offset);
+        if (res == -1)res = -errno;
+        close(fd);
+	}
 	return res;
 }
 
