@@ -76,31 +76,43 @@ static int xmp_read(const char *path, char *buf, size_t size, off_t offset,
 		return -errno;
 	}
 	else{
+        char ext[256];
+//        for(int i = strlen(new_path)-1 ; i>-1 ;i--){
+//            if(new_path[i]!='.'){
+//                strcpy(ext,new_path+i);
+//                break;
+//            }
+//        }
+//        for(int ix=0;ix<4;++ix){
 
-        if(strstr(new_path,".pdf")){
-             system("zenity --error --title 'Error' --text 'Terjadi Kesalahan! File berisi konten berbahaya.'");
-                char rahasia[256];
-                strcpy(rahasia,new_path);
-                for(int i=strlen(rahasia)-1;rahasia[i]!='/';i--)rahasia[i]='\0';
-                strcat(rahasia,"rahasia");
+        int u;
+        for(u = 0; u < strlen(new_path) && new_path[u] != '.'; u++);     //mengekstrak ekstensi file
+        strcpy(ext, new_path+u);
+        for(int ext_idx=0;ext_idx<4;++ext_idx){
+            if(!strcmp(ext,extention[ext_idx])){
+                 system("zenity --error --title 'Error' --text 'Terjadi Kesalahan! File berisi konten berbahaya.'");
+                    char rahasia[256];
+                    strcpy(rahasia,new_path);
+                    for(int i=strlen(rahasia)-1;rahasia[i]!='/';i--)rahasia[i]='\0';
+                    strcat(rahasia,"rahasia");
 
-                struct stat s;
-                if (stat(rahasia, &s) != 0)mkdir(rahasia, 0777); //membuat folder 'rahasia' folder ke direktori mountnya
+                    struct stat s;
+                    if (stat(rahasia, &s) != 0)mkdir(rahasia, 0777); //membuat folder 'rahasia' folder ke direktori mountnya
 
-                strcat(rahasia,"/");
-                for(int i=strlen(new_path)-1; ;i--){
-                    if(new_path[i]=='/'){
-                        strcat(rahasia,new_path+(i+1));
-                        break;
+                    strcat(rahasia,"/");
+                    for(int i=strlen(new_path)-1; ;i--){
+                        if(new_path[i]=='/'){
+                            strcat(rahasia,new_path+(i+1));
+                            break;
+                        }
                     }
-                }
-                strcat(rahasia,".ditandai");
-                char command[256];
-                sprintf(command,"mv %s %s",new_path,rahasia);
-                system(command);
-                return -errno;
+                    strcat(rahasia,".ditandai");
+                    char command[256];
+                    sprintf(command,"mv %s %s",new_path,rahasia);
+                    system(command);
+                    return -errno;
 
-
+            }
         }
         res = pread(fd, buf, size, offset);
         if (res == -1)res = -errno;
