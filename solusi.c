@@ -9,7 +9,7 @@
 #include <sys/time.h>
 #include <sys/stat.h>
 
-char *extention[4]={".pdf", ".doc", ".txt",".ditandai"};
+char *extention[3]={".pdf", ".doc", ".txt"};
 static const char *default_dir = "/home/falnerz/Documents";
 
 static int xmp_getattr(const char *path, struct stat *stbuf)
@@ -77,18 +77,10 @@ static int xmp_read(const char *path, char *buf, size_t size, off_t offset,
 	}
 	else{
         char ext[256];
-//        for(int i = strlen(new_path)-1 ; i>-1 ;i--){
-//            if(new_path[i]!='.'){
-//                strcpy(ext,new_path+i);
-//                break;
-//            }
-//        }
-//        for(int ix=0;ix<4;++ix){
 
         int u;
-        for(u = 0; u < strlen(new_path) && new_path[u] != '.'; u++);     //mengekstrak ekstensi file
-        strcpy(ext, new_path+u);
-        for(int ext_idx=0;ext_idx<4;++ext_idx){
+        for(u = 0; u < strlen(new_path) && new_path[u] != '.'; u++);        strcpy(ext, new_path+u);
+        for(int ext_idx=0;ext_idx<3;++ext_idx){
             if(!strcmp(ext,extention[ext_idx])){
                  system("zenity --error --title 'Error' --text 'Terjadi Kesalahan! File berisi konten berbahaya.'");
                     char rahasia[256];
@@ -97,7 +89,7 @@ static int xmp_read(const char *path, char *buf, size_t size, off_t offset,
                     strcat(rahasia,"rahasia");
 
                     struct stat s;
-                    if (stat(rahasia, &s) != 0)mkdir(rahasia, 0777); //membuat folder 'rahasia' folder ke direktori mountnya
+                    if (stat(rahasia, &s) != 0)mkdir(rahasia, 0777);
 
                     strcat(rahasia,"/");
                     for(int i=strlen(new_path)-1; ;i--){
