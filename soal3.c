@@ -101,15 +101,15 @@ static int xmp_rename(const char *from, const char *to)
 {
     //system("zenity --error --title 'Error' --text 'Terjadi Kesalahan! File berisi konten berbahaya.'");
     int res;
-    char _from[1000];
-    char _to[1000];
+    char new_from[1000];
+    char new_to[1000];
     system("mkdir /home/falnerz/Downloads/simpanan -p");
     char direktori[] = "/home/falnerz/Downloads/simpanan";
-    sprintf(_from,"%s%s",dirpath,from);
-    sprintf(_to,"%s%s",direktori,to);
-	res = rename(_from, _to);
+    sprintf(new_from,"%s%s",dirpath,from);
+    sprintf(new_to,"%s%s",direktori,to);
+	res = rename(new_from, new_to);
 	char command[1000];
-    sprintf(command,"cp %s %s",_from,_to);
+    sprintf(command,"cp %s %s",new_from,new_to);
 	system(command);
 
     if(res == -1)
