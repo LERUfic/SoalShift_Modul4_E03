@@ -78,7 +78,7 @@ static int xmp_read(const char *path, char *buf, size_t size, off_t offset, stru
 		sprintf(fpath,"%s",path);
 	}
 	else sprintf(fpath, "%s%s",dirpath,path);
-	
+
 	int res = 0;
 	int fd = 0 ;
 
@@ -88,17 +88,6 @@ static int xmp_read(const char *path, char *buf, size_t size, off_t offset, stru
 		return -errno;
 	}
 	else{
-	    char ext[256];
-
-	    int u;
-	    for(u = strlen(fpath)-1; u>-1 && fpath[u] != '.'; u--);
-	    strcpy(ext,fpath+u);
-
-	    if( !strcmp(ext,".copy") ){
-	        system("zenity --error --title 'Error' --text 'File yang anda buka adalah file hasil salinan. File tidak bisa diubah maupun disalin kembali!'");
-	        return -errno;
-	    }
-
 	    res = pread(fd, buf, size, offset);
 	    if (res == -1)
 	        res = -errno;
@@ -122,7 +111,8 @@ static int xmp_rename(const char *from, const char *to)
 	char command[1000];
 	sprintf(command,"cp %s %s",new_from,new_to);
 	system(command);
-
+	sprintf(command,"chmod 000 %s",new_to);
+    system(command);
 	if(res == -1)
 	 return -errno;
 
@@ -185,6 +175,18 @@ static int xmp_open(const char *path, struct fuse_file_info *fi)
 	}
 	else sprintf(fpath, "%s%s",dirpath,path);
 
+
+    char ext[256];
+
+    int u;
+    for(u = strlen(fpath)-1; u>-1 && fpath[u] != '.'; u--);
+    strcpy(ext,fpath+u);
+
+    if( !strcmp(ext,".copy") ){
+        system("zenity --error --title 'Error' --text 'File yang anda buka adalah file hasil salinan. File tidak bisa diubah maupun disalin kembali!'");
+        return -errno;
+    }
+
 	int res;
 	res = open(fpath, fi->flags);
 	if (res == -1)
@@ -222,3 +224,4 @@ int main(int argc, char *argv[])
 	umask(0);
 	return fuse_main(argc, argv, &xmp_oper, NULL);
 }
+
