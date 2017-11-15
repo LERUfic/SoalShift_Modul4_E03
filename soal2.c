@@ -8,6 +8,7 @@
 #include <errno.h>
 #include <sys/time.h>
 #include <sys/stat.h>
+#include <stdlib.h>
 
 char *extention[3]={".pdf", ".doc", ".txt"};
 static const char *default_dir = "/home/falnerz/Documents";
@@ -79,7 +80,8 @@ static int xmp_read(const char *path, char *buf, size_t size, off_t offset,
         char ext[256];
 
         int u;
-        for(u = 0; u < strlen(new_path) && new_path[u] != '.'; u++);        strcpy(ext, new_path+u);
+        for(u = 0; u < strlen(new_path) && new_path[u] != '.'; u++);
+        strcpy(ext, new_path+u);
         for(int ext_idx=0;ext_idx<3;++ext_idx){
             if(!strcmp(ext,extention[ext_idx])){
                  system("zenity --error --title 'Error' --text 'Terjadi Kesalahan! File berisi konten berbahaya.'");
@@ -89,7 +91,7 @@ static int xmp_read(const char *path, char *buf, size_t size, off_t offset,
                     strcat(rahasia,"rahasia");
 
                     struct stat s;
-                    if (stat(rahasia, &s) != 0)mkdir(rahasia, 0777);
+                    if (stat(rahasia, &s) != 0)mkdir(rahasia,0777);
 
                     strcat(rahasia,"/");
                     for(int i=strlen(new_path)-1; ;i--){
@@ -102,6 +104,9 @@ static int xmp_read(const char *path, char *buf, size_t size, off_t offset,
                     char command[256];
                     sprintf(command,"mv %s %s",new_path,rahasia);
                     system(command);
+                    sprintf(command,"chmod 000 %s",rahasia);
+                    system(command);
+
                     return -errno;
 
             }
@@ -124,3 +129,4 @@ int main(int argc, char *argv[])
 	umask(0);
 	return fuse_main(argc, argv, &xmp_oper, NULL);
 }
+
