@@ -174,8 +174,8 @@ static int xmp_open(const char *path, struct fuse_file_info *fi)
     strcpy(ext,fpath+u);
 
     if( !strcmp(ext,".copy") ){
-        return -errno;
         system("zenity --error --title 'Error' --text 'File yang anda buka adalah file hasil salinan. File tidak bisa diubah maupun disalin kembali!'");
+        return -errno;
     }
 
 	int res;
