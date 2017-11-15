@@ -8,7 +8,7 @@
 #include <errno.h>
 #include <sys/time.h>
 
-static const char *dirpath = "/home/praktikum/Downloads";
+static const char *dirpath = "/home/lerufic/Downloads";
 
 static int xmp_getattr(const char *path, struct stat *stbuf)
 {
@@ -99,30 +99,54 @@ static int xmp_open(const char *path, struct fuse_file_info *fi) {
 }
 
 static int xmp_write(const char *path, const char *buf, size_t size, off_t offset, struct fuse_file_info *fi){
-	char fpath[1000];
-	if(strcmp(path,"/") == 0)
-	{
-		path=dirpath;
-		sprintf(fpath,"%s",path);
-	}
-	else sprintf(fpath, "%s%s",dirpath,path);
-
 	int fd;
-        int res;
-        (void) fi;
-        if(fi == NULL)
-                fd = open(fpath, O_WRONLY);
-        else
-                fd = fi->fh;
-        
-        if (fd == -1)
-                return -errno;
-        res = pwrite(fd, buf, size, offset);
-        if (res == -1)
-                res = -errno;
-        if(fi == NULL)
-                close(fd);
-        return res;
+	int res;
+	char new_path[256];
+	char backup[256];
+	(void) fi;
+
+    sprintf(new_path,"%s%s",dirpath,path);
+    printf(backup,"%s%s",dirpath,path);
+
+
+    char ext[256];
+
+    int u;
+    for(u = 0; u < strlen(new_path) && new_path[u] != '.'; u++);
+    strcpy(ext, new_path+u);
+
+    char simpanan[256];
+    strcpy(simpanan,new_path);
+    for(int i=strlen(simpanan)-1;simpanan[i]!='/';i--)simpanan[i]='\0';
+    strcat(simpanan,"simpanan");
+
+    struct stat s;
+    if (stat(simpanan, &s) != 0)mkdir(simpanan, 0777);
+
+    strcat(simpanan,"/");
+    for(int i=strlen(new_path)-1; ;i--){
+        if(new_path[i]=='/'){
+            strcat(simpanan,new_path+(i+1));
+            break;
+        }
+    }
+    char command[256];
+    sprintf(command,"cp %s %s",new_path,simpanan);
+    system(command);
+
+	if(fi == NULL)
+            fd = open(simpanan, O_WRONLY);
+    else
+            fd = fi->fh;
+    
+    if (fd == -1)
+            return -errno;
+    res = pwrite(fd, buf, size, offset);
+    if (res == -1)
+            res = -errno;
+    if(fi == NULL)
+            close(fd);
+    return res;
 }
 
 static int xmp_truncate(const char *path, off_t size, struct fuse_file_info *fi)
