@@ -10,7 +10,6 @@
 #include <stdlib.h>
 
 static const char *dirpath = "/home/falnerz/Downloads";
-char copied_path[256];
 
 static int xmp_getattr(const char *path, struct stat *stbuf)
 {
@@ -74,14 +73,14 @@ static int xmp_read(const char *path, char *buf, size_t size, off_t offset, stru
 {
 	char fpath[1000];
     sprintf(fpath, "%s%s", dirpath, path);
-    strcpy(copied_path,fpath);
 	int res = 0;
 	int fd = 0 ;
 
 	(void) fi;
 	fd = open(fpath, O_RDONLY);
 	if (fd == -1){
-		return -errno;
+
+        return -errno;
 	}
 	else{
 	    res = pread(fd, buf, size, offset);
@@ -135,9 +134,8 @@ static int xmp_write(const char *path, const char *buf, size_t size, off_t offse
 	if (res == -1)
 		res = -errno;
 
-    //ambil ekstensi
     char command[256];
-    sprintf(command,"mv '%s' %s.copy",fpath,copied_path);
+    sprintf(command,"mv '%s' %s.copy",fpath,fpath);
     system(command);
  	close(fd);
 	return res;
@@ -166,13 +164,10 @@ static int xmp_open(const char *path, struct fuse_file_info *fi)
 		sprintf(fpath,"%s",path);
 	}
 	else sprintf(fpath, "%s%s",dirpath,path);
-
     char ext[256];
-
     int u;
     for(u = strlen(fpath)-1; u>-1 && fpath[u] != '.'; u--);
     strcpy(ext,fpath+u);
-
     if( !strcmp(ext,".copy") ){
         system("zenity --error --title 'Error' --text 'File yang anda buka adalah file hasil salinan. File tidak bisa diubah maupun disalin kembali!'");
         return -errno;
