@@ -1,3 +1,4 @@
+
 #define FUSE_USE_VERSION 28
 #include <fuse.h>
 #include <stdio.h>
@@ -7,8 +8,9 @@
 #include <dirent.h>
 #include <errno.h>
 #include <sys/time.h>
+#include <stdlib.h>
 
-static const char *dirpath = "/home/praktikum/Downloads";
+static const char *dirpath = "/home/falnerz/Downloads";
 
 static int xmp_getattr(const char *path, struct stat *stbuf)
 {
@@ -23,7 +25,19 @@ static int xmp_getattr(const char *path, struct stat *stbuf)
 	return 0;
 }
 
-static int xmp_readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offset, struct fuse_file_info *fi)
+static int xmp_chmod(const char *path, mode_t mode)
+{
+	int res;
+	char fpath[1000];
+	sprintf(fpath,"%s%s",dirpath,path);
+    res = chmod(fpath, mode);
+    if (res == -1)
+        return -errno;
+    return 0;
+}
+
+static int xmp_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
+		       off_t offset, struct fuse_file_info *fi)
 {
   char fpath[1000];
 	if(strcmp(path,"/") == 0)
@@ -57,7 +71,9 @@ static int xmp_readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_
 	return 0;
 }
 
-static int xmp_read(const char *path, char *buf, size_t size, off_t offset,struct fuse_file_info *fi){
+static int xmp_read(const char *path, char *buf, size_t size, off_t offset,
+		    struct fuse_file_info *fi)
+{
   char fpath[1000];
 	if(strcmp(path,"/") == 0)
 	{
@@ -66,7 +82,7 @@ static int xmp_read(const char *path, char *buf, size_t size, off_t offset,struc
 	}
 	else sprintf(fpath, "%s%s",dirpath,path);
 	int res = 0;
-  int fd = 0 ;
+    int fd = 0 ;
 
 	(void) fi;
 	fd = open(fpath, O_RDONLY);
@@ -81,8 +97,77 @@ static int xmp_read(const char *path, char *buf, size_t size, off_t offset,struc
 	return res;
 }
 
-static int xmp_open(const char *path, struct fuse_file_info *fi) {
-        char fpath[1000];
+static int xmp_rename(const char *from, const char *to)
+{
+    //system("zenity --error --title 'Error' --text 'Terjadi Kesalahan! File berisi konten berbahaya.'");
+    int res;
+    char _from[1000];
+    char _to[1000];
+    system("mkdir /home/falnerz/Downloads/simpanan -p");
+    char direktori[] = "/home/falnerz/Downloads/simpanan";
+    sprintf(_from,"%s%s",dirpath,from);
+    sprintf(_to,"%s%s",direktori,to);
+	res = rename(_from, _to);
+	char command[1000];
+    sprintf(command,"cp %s %s",_from,_to);
+	system(command);
+
+    if(res == -1)
+    	return -errno;
+
+    return 0;
+}
+
+static int xmp_truncate(const char *path, off_t size)
+{
+    int res;
+     char fpath[1000];
+ 	sprintf(fpath,"%s%s", dirpath, path);
+
+    res = truncate(fpath, size);
+    if(res == -1)
+        return -errno;
+
+    return 0;
+}
+
+static int xmp_write(const char *path, const char *buf, size_t size,
+		     off_t offset, struct fuse_file_info *fi)
+{
+	int fd;
+	int res;
+	char fpath[1000];
+    sprintf(fpath,"%s%s", dirpath, path);
+	(void) fi;
+	fd = open(fpath, O_WRONLY);
+	if (fd == -1)
+		return -errno;
+
+	res = pwrite(fd, buf, size, offset);
+	if (res == -1)
+		res = -errno;
+
+	close(fd);
+	return res;
+}
+
+static int xmp_mknod(const char *path, mode_t mode, dev_t rdev)
+{
+    int res;
+    char fpath[1000];
+    sprintf(fpath,"%s%s", dirpath, path);
+    res = mknod(fpath, mode, rdev);
+    if(res == -1)
+        return -errno;
+
+    return 0;
+}
+
+
+
+static int xmp_open(const char *path, struct fuse_file_info *fi)
+{
+    char fpath[1000];
 	if(strcmp(path,"/") == 0)
 	{
 		path=dirpath;
@@ -90,87 +175,36 @@ static int xmp_open(const char *path, struct fuse_file_info *fi) {
 	}
 	else sprintf(fpath, "%s%s",dirpath,path);
 
-	int res;
+        int res;
         res = open(fpath, fi->flags);
         if (res == -1)
                 return -errno;
-        fi->fh = res;
+        close(res);
         return 0;
 }
 
-static int xmp_write(const char *path, const char *buf, size_t size, off_t offset, struct fuse_file_info *fi){
-	char fpath[1000];
-	if(strcmp(path,"/") == 0)
-	{
-		path=dirpath;
-		sprintf(fpath,"%s",path);
-	}
-	else sprintf(fpath, "%s%s",dirpath,path);
 
-	int fd;
-        int res;
-        (void) fi;
-        if(fi == NULL)
-                fd = open(fpath, O_WRONLY);
-        else
-                fd = fi->fh;
-        
-        if (fd == -1)
-                return -errno;
-        res = pwrite(fd, buf, size, offset);
-        if (res == -1)
-                res = -errno;
-        if(fi == NULL)
-                close(fd);
-        return res;
-}
-
-static int xmp_truncate(const char *path, off_t size, struct fuse_file_info *fi)
+static int xmp_utimens(const char *path, const struct timespec ts[2])
 {
-	char fpath[1000];
-	if(strcmp(path,"/") == 0)
-	{
-		path=dirpath;
-		sprintf(fpath,"%s",path);
-	}
-	else sprintf(fpath, "%s%s",dirpath,path);
-
         int res;
-        if (fi != NULL)
-                res = ftruncate(fi->fh, size);
-        else
-                res = truncate(fpath, size);
+        /* don't use utime/utimes since they follow symlinks */
+        res = utimensat(0, path, ts, AT_SYMLINK_NOFOLLOW);
         if (res == -1)
                 return -errno;
-        return 0;
-}
-
-static int xmp_create(const char *path, mode_t mode, struct fuse_file_info *fi)
-{
-	char fpath[1000];
-	if(strcmp(path,"/") == 0)
-	{
-		path=dirpath;
-		sprintf(fpath,"%s",path);
-	}
-	else sprintf(fpath, "%s%s",dirpath,path);
-
-
-        int res;
-        res = open(fpath, fi->flags, mode);
-        if (res == -1)
-                return -errno;
-        fi->fh = res;
         return 0;
 }
 
 static struct fuse_operations xmp_oper = {
 	.getattr	= xmp_getattr,
 	.readdir	= xmp_readdir,
-	.read		= xmp_read,
+    .read		= xmp_read,
+    .rename     = xmp_rename,
+    .write      = xmp_write,
+	.mknod      = xmp_mknod,
+	.truncate   =xmp_truncate,
 	.open		= xmp_open,
-	.write		= xmp_write,
-	.truncate	= xmp_truncate
+	.chmod		= xmp_chmod,
+    .utimens    = xmp_utimens,
 };
 
 int main(int argc, char *argv[])
@@ -178,3 +212,4 @@ int main(int argc, char *argv[])
 	umask(0);
 	return fuse_main(argc, argv, &xmp_oper, NULL);
 }
+
