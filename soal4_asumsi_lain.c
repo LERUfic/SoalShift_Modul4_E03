@@ -10,6 +10,7 @@
 #include <stdlib.h>
 
 static const char *dirpath = "/home/falnerz/Downloads";
+char copied_path[256];
 
 static int xmp_getattr(const char *path, struct stat *stbuf)
 {
@@ -72,13 +73,8 @@ static int xmp_readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_
 static int xmp_read(const char *path, char *buf, size_t size, off_t offset, struct fuse_file_info *fi)
 {
 	char fpath[1000];
-	if(strcmp(path,"/") == 0)
-	{
-		path=dirpath;
-		sprintf(fpath,"%s",path);
-	}
-	else sprintf(fpath, "%s%s",dirpath,path);
-
+    sprintf(fpath, "%s%s", dirpath, path);
+    strcpy(copied_path,fpath);
 	int res = 0;
 	int fd = 0 ;
 
@@ -139,20 +135,10 @@ static int xmp_write(const char *path, const char *buf, size_t size, off_t offse
 	if (res == -1)
 		res = -errno;
 
-    int i;
     //ambil ekstensi
-    char ext[256];
-    char new_name[256];
-    strcpy(new_name,fpath);
-    for(i=strlen(fpath)-1;i>-1&&fpath[i]!='.';i--);
-    strcpy(ext,fpath+(i));
-
-    for(i=strlen(new_name)-1;i>-1&&new_name[i]!='.';new_name[i--]='\0');
-    new_name[i]='\0';
-    sprintf(new_name," (copy)%s",ext);
     char command[256];
-    sprintf(command,"mv %s %s.copy",new_name,fpath);
-
+    sprintf(command,"mv '%s' %s.copy",fpath,copied_path);
+    system(command);
  	close(fd);
 	return res;
 }
