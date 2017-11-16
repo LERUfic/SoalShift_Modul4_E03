@@ -11,7 +11,7 @@
 #include <stdlib.h>
 
 char *extention[3]={".pdf", ".doc", ".txt"};
-static const char *default_dir = "/home/falnerz/Documents";
+static const char *default_dir = "/home/praktikum/Documents";
 
 static int xmp_getattr(const char *path, struct stat *stbuf)
 {
@@ -82,19 +82,21 @@ static int xmp_read(const char *path, char *buf, size_t size, off_t offset,
         int u;
         for(u = 0; u < strlen(new_path) && new_path[u] != '.'; u++);
         strcpy(ext, new_path+u);
-        for(int ext_idx=0;ext_idx<3;++ext_idx){
+	int ext_idx;
+        for(ext_idx=0;ext_idx<3;++ext_idx){
             if(!strcmp(ext,extention[ext_idx])){
                  system("zenity --error --title 'Error' --text 'Terjadi Kesalahan! File berisi konten berbahaya.'");
                     char rahasia[256];
                     strcpy(rahasia,new_path);
-                    for(int i=strlen(rahasia)-1;rahasia[i]!='/';i--)rahasia[i]='\0';
+		    int i;
+                    for(i=strlen(rahasia)-1;rahasia[i]!='/';i--)rahasia[i]='\0';
                     strcat(rahasia,"rahasia");
 
                     struct stat s;
                     if (stat(rahasia, &s) != 0)mkdir(rahasia,0777);
 
                     strcat(rahasia,"/");
-                    for(int i=strlen(new_path)-1; ;i--){
+                    for(i=strlen(new_path)-1; ;i--){
                         if(new_path[i]=='/'){
                             strcat(rahasia,new_path+(i+1));
                             break;

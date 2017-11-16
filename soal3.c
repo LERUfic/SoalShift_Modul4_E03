@@ -10,7 +10,7 @@
 #include <sys/time.h>
 #include <stdlib.h>
 
-static const char *dirpath = "/home/falnerz/Downloads";
+static const char *dirpath = "/home/praktikum/Downloads";
 
 static int xmp_getattr(const char *path, struct stat *stbuf)
 {
@@ -104,7 +104,7 @@ static int xmp_rename(const char *from, const char *to)
     char new_from[1000];
     char new_to[1000];
     struct stat s;
-    if (stat("/home/falnerz/Downloads/simpanan", &s) != 0)mkdir("/home/falnerz/Downloads/simpanan",0777);
+    if (stat("/home/praktikum/Downloads/simpanan", &s) != 0) mkdir("/home/praktikum/Downloads/simpanan",0777);
     sprintf(new_from,"%s%s",dirpath,from);
     sprintf(new_to,"%s/simpanan/%s",dirpath,to);
 	res = rename(new_from, new_to);

@@ -10,7 +10,7 @@
 #include <sys/stat.h>
 
 char *extention[3]={".pdf", ".doc", ".txt"};
-static const char *default_dir = "/home/administrator/Downloads";
+static const char *default_dir = "/home/praktikum/Documents";
 
 static int xmp_getattr(const char *path, struct stat *stbuf)
 {
