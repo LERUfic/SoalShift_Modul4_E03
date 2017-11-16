@@ -103,14 +103,11 @@ static int xmp_rename(const char *from, const char *to)
     int res;
     char new_from[1000];
     char new_to[1000];
-    system("mkdir /home/falnerz/Downloads/simpanan -p");
-    char direktori[] = "/home/falnerz/Downloads/simpanan";
+    struct stat s;
+    if (stat("/home/falnerz/Downloads/simpanan", &s) != 0)mkdir("/home/falnerz/Downloads/simpanan",0777);
     sprintf(new_from,"%s%s",dirpath,from);
-    sprintf(new_to,"%s%s",direktori,to);
+    sprintf(new_to,"%s/simpanan/%s",dirpath,to);
 	res = rename(new_from, new_to);
-	char command[1000];
-    sprintf(command,"cp %s %s",new_from,new_to);
-	system(command);
 
     if(res == -1)
     	return -errno;
@@ -212,4 +209,3 @@ int main(int argc, char *argv[])
 	umask(0);
 	return fuse_main(argc, argv, &xmp_oper, NULL);
 }
-
